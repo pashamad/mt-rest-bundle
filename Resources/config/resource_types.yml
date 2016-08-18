@@ -1,0 +1,2 @@
+orm_doctrine:
+    factory_service: "@mt_rest.resource_factory.orm_doctrine"
