@@ -10,23 +10,52 @@
 
     <services>
 
+        <!-- Endpoint -->
         <service id="mt_rest.endpoint.definition_loader" class="Mt\RestBundle\Service\EndpointDefinitionLoader"/>
-
-        <service id="mt_rest.auth.oauth_handler" class="Mt\RestBundle\Service\OAuthHandlerService"/>
 
         <service id="mt_rest.endpoint" class="Mt\RestBundle\Service\EndpointService">
             <argument type="service" id="mt_rest.endpoint.definition_loader"/>
-            <argument type="service" id="mt_rest.auth.oauth_handler"/>
+            <argument type="service" id="mt_rest.security.auth_handler"/>
         </service>
 
         <service id="mt_rest.request" class="Mt\RestBundle\Service\RequestService"/>
 
-        <service id="mt_rest.resource_factory.orm_doctrine" class="Mt\RestBundle\Service\ResourceFactory\DoctrineResourceFactory">
+        <!-- Resource -->
+        <service id="mt_rest.resource_factory.orm_doctrine"
+                 class="Mt\RestBundle\Service\ResourceFactory\DoctrineResourceFactory">
             <argument type="service" id="service_container"/>
         </service>
 
         <service id="mt_rest.resource_type.orm_doctrine" class="Mt\RestBundle\ResourceType\DoctrineResourceType">
             <argument type="service" id="mt_rest.resource_factory.orm_doctrine"/>
+        </service>
+
+        <!-- Authentication -->
+        <!--<service id="mt_rest.auth.oauth_handler" class="Mt\RestBundle\Service\OAuthHandlerService"/>-->
+
+        <service id="mt_rest.security.plain_authenticator" class="Mt\RestBundle\Security\PlainAuthenticator">
+            <argument type="service" id="doctrine.orm.entity_manager"/>
+        </service>
+
+        <!-- Adapters -->
+        <service id="mt_rest.security.adapter.authorization_checker"
+                 class="Mt\RestBundle\Security\AuthorizationCheckerAdapter">
+            <argument type="service" id="security.authorization_checker"/>
+        </service>
+
+        <service id="mt_rest.security.adapter.token_storage" class="Mt\RestBundle\Security\TokenStorageAdapter">
+            <argument type="service" id="security.token_storage"/>
+        </service>
+
+        <!-- Default AuthHandler -->
+        <service id="mt_rest.security.auth_handler" class="Mt\RestBundle\Security\AuthHandler" public="false">
+            <argument type="service" id="mt_rest.security.adapter.token_storage"/>
+            <argument type="service" id="mt_rest.security.adapter.authorization_checker"/>
+        </service>
+
+        <!-- Default voters -->
+        <service id="mt_rest.security.voters.public" class="Mt\RestBundle\Security\PublicResourceVoter" public="false">
+            <tag name="security.voter"/>
         </service>
 
     </services>

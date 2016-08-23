@@ -18,6 +18,7 @@ class ResourceTypeCollection implements \IteratorAggregate
      */
     public function registerType(ResourceTypeInterface $type)
     {
+        // @todo fix interface
         $id = $type->getId();
 
         if (isset($this->map[$id])) {

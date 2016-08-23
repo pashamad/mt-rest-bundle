@@ -2,7 +2,7 @@
 
 namespace Mt\RestBundle\Service;
 
-use Mt\RestBundle\Bridge\Auth\AuthHandlerInterface;
+use Mt\RestBundle\Bridge\Security\AuthHandlerInterface;
 use Mt\RestBundle\Bridge\Endpoint\EndpointInterface;
 use Mt\RestBundle\Bridge\Endpoint\EndpointLocatorInterface;
 use Mt\RestBundle\Bridge\Request\EndpointRequestInterface;

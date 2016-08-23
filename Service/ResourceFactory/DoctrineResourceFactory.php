@@ -39,6 +39,13 @@ class DoctrineResourceFactory implements ResourceFactoryInterface
 
         $normalizer = new ObjectNormalizer();
 
-        return new DoctrineResource($manager, $repository, $normalizer);
+        // @todo token storage
+        // @todo decision manager
+
+        $resource = new DoctrineResource($manager, $repository, $normalizer);
+
+        //$resource->setAuthorizationChecker($this->container->get('security.authorization_checker'));
+
+        return $resource;
     }
 }

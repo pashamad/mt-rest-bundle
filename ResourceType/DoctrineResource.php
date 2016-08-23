@@ -4,6 +4,8 @@ namespace Mt\RestBundle\ResourceType;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Mt\RestBundle\Bridge\Collection\ResourceCollection;
+use Mt\RestBundle\Bridge\Resource\ResourceEntityInterface;
 use Mt\RestBundle\Bridge\Resource\ResourceInterface;
 use Mt\RestBundle\Core\Resource\ResourceQuery;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -33,19 +35,21 @@ class DoctrineResource implements ResourceInterface
     }
 
     /**
-     * @todo authorization pointcut
-     *
      * @param ResourceQuery $query
-     * @return object
+     * @return ResourceEntityInterface
      */
-    public function create(ResourceQuery $query)
+    public function create(ResourceQuery $query): ResourceEntityInterface
     {
         $data = $query->getData();
 
         $className = $this->repository->getClassName();
 
-        // @todo optional factory service
+        /**
+         * @var ResourceEntityInterface $entity
+         * @todo factory
+         */
         $entity = $this->denormalizer->denormalize($data, $className);
+        $entity->setOwner($query->getToken()->getUser());
 
         $this->manager->persist($entity);
         $this->manager->flush($entity);
@@ -54,40 +58,80 @@ class DoctrineResource implements ResourceInterface
     }
 
     /**
-     * @todo authorization pointcut
-     *
      * @param ResourceQuery $query
-     * @return array|null|object
+     * @return ResourceCollection
      */
-    public function read(ResourceQuery $query)
+    public function read(ResourceQuery $query): ResourceCollection
     {
         $id = $query->getId();
 
         if (is_null($id)) {
-            // @todo pagination
             $data = $this->repository->findAll();
         } else {
             $data = $this->repository->find($id);
+            if (empty($data)) {
+                $data = [];
+            } else {
+                $data = [$data];
+            }
         }
 
-        return $data;
+        return new ResourceCollection($data);
     }
 
     /**
-     * @todo authorization pointcut
-     *
      * @param ResourceQuery $query
+     * @return ResourceEntityInterface
+     * @throws \Exception
      */
-    public function update(ResourceQuery $query)
+    public function update(ResourceQuery $query): ResourceEntityInterface
     {
-        // TODO: Implement update() method.
+        /** @var ResourceEntityInterface $entity */
+        $entity = $this->repository->find($query->getId());
+        $class = new \ReflectionClass(get_class($entity));
+
+        $data = $query->getData();
+
+        foreach ($data as $propName => $propValue) {
+
+            if ($propName == 'id') {
+                throw new \Exception('Id property is immutable');
+            }
+            if ($propName == 'owner') {
+                throw new \Exception('Owner property is immutable');
+            }
+            if (!$class->hasProperty($propName)) {
+                throw new \Exception(sprintf('Unknown property name %s', $propName));
+            }
+
+            $setter = 'set' . ucfirst($propName);
+            $method = new \ReflectionMethod($class->getName(), $setter);
+            $method->invoke($entity, $propValue);
+        }
+
+        $this->manager->persist($entity);
+        $this->manager->flush($entity);
+
+        return $entity;
     }
 
-    /*
-     * @todo authorization pointcut
+    /**
+     * @param ResourceQuery $query
+     * @return ResourceEntityInterface
+     * @throws \Exception
      */
-    public function delete(ResourceQuery $query)
+    public function delete(ResourceQuery $query): ResourceEntityInterface
     {
-        // TODO: Implement delete() method.
+        /** @var ResourceEntityInterface $entity */
+        $entity = $this->repository->find($query->getId());
+
+        if (empty($entity)) {
+            throw new \Exception('Entity not found');
+        }
+
+        $this->manager->remove($entity);
+        $this->manager->flush($entity);
+
+        return $entity;
     }
 }
