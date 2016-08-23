@@ -50,6 +50,7 @@ class RequestHandler implements RequestHandlerInterface
                         throw new AccessDeniedException();
                     }
                 }
+                $result = $result->getElements();
                 break;
 
             case EndpointRequestInterface::METHOD_POST:

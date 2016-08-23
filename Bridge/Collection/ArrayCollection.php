@@ -22,6 +22,11 @@ abstract class ArrayCollection implements Collection
         return new \ArrayIterator($this->elements);
     }
 
+    public function getElements()
+    {
+        return $this->elements;
+    }
+
     public function count()
     {
         return count($this->elements);
