@@ -89,24 +89,33 @@ class DoctrineResource implements ResourceInterface
         /** @var ResourceEntityInterface $entity */
         $entity = $this->repository->find($query->getId());
         $class = new \ReflectionClass(get_class($entity));
+        $metadata = $this->manager->getClassMetadata($class->getName());
+        $mappings = $metadata->getAssociationMappings();
 
         $data = $query->getData();
 
-        foreach ($data as $propName => $propValue) {
+        foreach ($data as $name => $value) {
 
-            if ($propName == 'id') {
-                throw new \Exception('Id property is immutable');
-            }
-            if ($propName == 'owner') {
-                throw new \Exception('Owner property is immutable');
-            }
-            if (!$class->hasProperty($propName)) {
-                throw new \Exception(sprintf('Unknown property name %s', $propName));
+            if (in_array($name, ['id', 'owner'])) {
+                throw new \InvalidArgumentException(sprintf('Property %s is immutable', $name));
             }
 
-            $setter = 'set' . ucfirst($propName);
+            if (!$class->hasProperty($name)) {
+                throw new \Exception(sprintf('Unknown property name %s', $name));
+            }
+
+            if (isset($mappings[$name])) {
+                $target = $mappings[$name]['targetEntity'];
+                $value = is_scalar($value)
+                    ? $this->manager->getReference($target, $value)
+                    : array_map(function ($id) use ($target) {
+                        return $this->manager->getReference($target, $id);
+                    }, $value);
+            }
+
+            $setter = 'set' . ucfirst($name);
             $method = new \ReflectionMethod($class->getName(), $setter);
-            $method->invoke($entity, $propValue);
+            $method->invoke($entity, $value);
         }
 
         $this->manager->persist($entity);

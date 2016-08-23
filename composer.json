@@ -1,0 +1,13 @@
+{
+  "name": "pashamad/mt-rest-bundle",
+  "type": "library",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=7.0"
+  },
+  "autoload": {
+    "psr-0": {
+      "Mt\\RestBundle": "src"
+    }
+  }
+}
